@@ -7,7 +7,7 @@ address = 0xa000
 assetAddress = 0xa102
 
 spriteTable = sys.stdout #open("sprites.s", "w")
-spriteFile = open("CHOPGFX-full", "wb")
+spriteFile = open("CHOPGFX-generated", "wb")
 
 # build a table of assets
 def buildTable(name, comments, assets):
@@ -333,7 +333,97 @@ buildTable("mountainSpriteTable",
     "Mountain Mountain 4.w56",
     ])
 
+buildTable("hudBorderSprite", [], [ "HUD Right border (green) of HUD" ])
 
+buildTable("hudCornerSprite", [], [ "HUD Angled top corners of HUD" ])
 
+buildTable("hudCornerSprite", [], [ "Base The orange main building of the base.w51" ])
 
+buildTable("baseGrassCornerSprite", [], [ "Base The little corners of grass at the base" ])
 
+buildTable("baseFlagpole", [], [ "Base The flag pole (without the flapping flag)" ])
+
+buildTable("baseFlagSpriteTable",
+    [],
+    [
+    "Base Flag animation (frame 1)",
+    "Base Flag animation (frame 2)",
+    ])
+
+buildTable("baseLeftSidewalkSprite", [], [ "Base Little piece of sidewalk left of the base" ])
+
+buildTable("baseRightSidewalkSprite", [], [ "Base Little piece of sidewalk right of the base" ])
+
+buildTable("fenceTowerSprite4", [], [ "FenceTower Smallest (furthest) security fence tower" ])
+
+buildTable("fenceTowerSprite3", [], [ "FenceTower 3" ])
+
+buildTable("fenceTowerSprite2", [], [ "FenceTower 2" ])
+
+buildTable("fenceTowerSprite1", [], [ "FenceTower 1" ])
+
+buildTable("fenceTowerSprite0", [], [ "FenceTower Largest (closest) security fence tower" ])
+
+buildTable("houseSpriteTable",
+    [
+    "All the sprites for the hostage houses"
+    ],
+    [
+    "House Normal house.w27",
+    "House House on fire.w27",
+    ])
+
+buildTable("houseSillSprite", [], [ "House The white strip along the bottom of the house" ])
+
+buildTable("houseDebrisSprite", [], [ "House The debris in front of a burning house" ])
+
+buildTable("houseFireSprites",
+    [],
+    [
+    "House Fire animation (Frame 1)",
+    "House Fire animation (Frame 2)",
+    ])
+
+buildTable("fontGraphicsTable",
+    [
+    "A list of pointers to all the font glyphs"
+    ],
+    [
+    "FontGraphics 0",
+    "FontGraphics 1",
+    "FontGraphics 2",
+    "FontGraphics 3",
+    "FontGraphics 4",
+    "FontGraphics 5",
+    "FontGraphics 6",
+    "FontGraphics 7",
+    "FontGraphics 8",
+    "FontGraphics 9",
+    ])
+
+buildTable("hudBubbleSprite", [], [ "HUD The little bubbles next to the HUD numbers" ])
+
+buildTable("hudBackgroundBubbleSprite", [], [ "HUD The black background on the HUD numbers" ])
+
+buildTable("titleGraphicsTable",
+    [
+    "A list of pointers to all the title graphic pieces"
+    ],
+    [
+    "Title Your Mission- Rescue Hostages",
+    "Title Choplifter logo",
+    "Title Broderbund Presents",
+    "Title Dan Gorlin logo",
+    "Title The End",
+    "Title Broderbund crown logo",
+    ])
+
+buildTable("sortieGraphicsTable",
+    [
+    "A list of pointers to all the font glyphs"
+    ],
+    [
+    "Sortie First Sortie",
+    "Sortie Second Sortie",
+    "Sortie Third Sortie",
+    ])
