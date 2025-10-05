@@ -78,10 +78,11 @@ def convertPreshiftedAsset(image, realWidth):
     
     highBit = 0
     bits = [ -1, -1 ]
-    for shift in range(0, 6):
+    for shift in range(0, 7):
         for h in range(0, image.height):
             byte = 0
             bit = 1 << shift
+            bitsEmitted = 0
             for w in range(0, image.width):
                 # don't read past bounds
                 bits = [ -1, -1 ]
@@ -113,30 +114,33 @@ def convertPreshiftedAsset(image, realWidth):
                         highBit = 0x80
                         bits = [1, 1]
                 
-                if bit >= 0x80:
-                    spriteFile.write(struct.pack("=B", highBit | (byte & 0x7F)))
-                    byte = 0
-                    bit = 1
-                
                 # emit the first bit, if any
                 if bits[0] >= 0:
                     if bits[0] > 0:
                         byte |= bit
                     bit <<= 1
-                
-                if bit >= 0x80:
-                    spriteFile.write(struct.pack("=B", highBit | (byte & 0x7F)))
-                    byte = 0
-                    bit = 1
+                    if bit >= 0x80:
+                        if bitsEmitted < width:
+                            spriteFile.write(struct.pack("=B", highBit | (byte & 0x7F)))
+                            bitsEmitted += 7
+                        byte = 0
+                        bit = 1
                 
                 # emit the second bit, if any
                 if bits[1] >= 0:
                     if bits[1] > 0:
                         byte |= bit
                     bit <<= 1
-            # emit any padding bits at the right edge
-            if bit > 1:
+                    if bit >= 0x80:
+                        if bitsEmitted < width:
+                            spriteFile.write(struct.pack("=B", highBit | (byte & 0x7F)))
+                            bitsEmitted += 7
+                        byte = 0
+                        bit = 1
+            # finishing up the row, emit any leftovers
+            if bit > 1 and bitsEmitted < width:
                 spriteFile.write(struct.pack("=B", highBit | (byte & 0x7F)))
+                bitsEmitted += 7
 
 # --- Main ---
 
