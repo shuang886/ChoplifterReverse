@@ -89,30 +89,32 @@ def convertPreshiftedAsset(image, realWidth):
                 if w < image.width:
                     r, g, b = pixels[w, h]
                     c = (r << 16) | (g << 8) | b
-                    if c == 0x000000:
+                    if c == 0x000000: # black0
                         highBit = 0
                         bits = [0, 0]
-                    elif c == 0x00ff00:
+                    elif c == 0x75fb4c: # green
                         highBit = 0
                         bits = [0, 1]
-                    elif c == 0xff00ff:
+                    elif c == 0xea33f7: # purple
                         highBit = 0
                         bits = [1, 0]
-                    elif c == 0xffffff:
+                    elif c == 0xd5d5d5: # white0
                         highBit = 0
                         bits = [1, 1]
-                    elif c == 0x010101:
+                    elif c == 0x646464: # black1
                         highBit = 0x80
                         bits = [0, 0]
-                    elif c == 0xff0000:
+                    elif c == 0xec5e2a: # orange
                         highBit = 0x80
                         bits = [0, 1]
-                    elif c == 0x0000ff:
+                    elif c == 0x4eacf8: # blue
                         highBit = 0x80
                         bits = [1, 0]
-                    elif c == 0xfefefe:
+                    elif c == 0xffffff: # white1
                         highBit = 0x80
                         bits = [1, 1]
+                    else:
+                        print(f"unrecognized pixel color {c:06x} at {w}, {h}")
                 
                 # emit the first bit, if any
                 if bits[0] >= 0:
