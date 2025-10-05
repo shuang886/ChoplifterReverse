@@ -427,3 +427,6 @@ buildTable("sortieGraphicsTable",
     "Sortie Second Sortie",
     "Sortie Third Sortie",
     ])
+
+# the original file has an extraneous 0 byte in the end, matching it so binary diff can work
+spriteFile.write(struct.pack("=B", 0))
