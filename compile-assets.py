@@ -1,5 +1,6 @@
 from PIL import Image
-import sys, struct, re, math
+from collections import deque
+import sys, struct, re, math, os.path
 
 # tracks addresses in the .s file (where the pointers can be found)
 address = 0xa000
@@ -25,10 +26,13 @@ def buildTable(name, comments, assets):
         # save starting position
         spriteFilePosition = spriteFile.tell()
         
+        # there are two kinds of image assets:
+        # - normal sprite
+        # - preshifted: 7 copies of the same thing, each shifted 1 bit to the right
         if r.group(3) is None:
             convertAsset(image)
         else:
-            convertPreshiftedAsset(image, int(r.group(3)))
+            convertPreshiftedAsset(image)
         
         address += 2
         image.close()
@@ -64,87 +68,89 @@ def convertAsset(image):
                 byte = 1
 
 # convert a PNG to Choplifter's header-data format
-def convertPreshiftedAsset(image, realWidth):
+def convertPreshiftedAsset(image):
     pixels = image.load()
     
-    # write the width and height header
-    spriteFile.write(struct.pack("=B", realWidth)) # 2 bpp
-    spriteFile.write(struct.pack("=B", image.height))
-            
-    # initialize with sentinel bit
-    byte = 0
-    bit = 1
-    width = math.ceil((realWidth + 7) / 7) * 7
+    # image.width is actually doubled, because we had to account for a 2-bit pixel
+    # split across two bytes that can have different high-bit settings.
     
-    highBit = 0
-    bits = [ -1, -1 ]
+    # write the width and height header
+    spriteFile.write(struct.pack("=B", image.width))
+    spriteFile.write(struct.pack("=B", image.height))
+    
+    expectedBytesPerRow = math.ceil((image.width + 7) / 7) # 7 padding, 7 bpp
     for shift in range(0, 7):
+        lastHighBit = 0
+        outputBits = deque()
         for h in range(0, image.height):
-            byte = 0
-            bit = 1 << shift
-            bitsEmitted = 0
+            # before starting each row, shift towards the right if needed
+            outputMask = 1 << shift
+            for _ in range(0, shift):
+                outputBits.append(0)
+            bytesEmittedForRow = 0
+            readingBit0 = True
             for w in range(0, image.width):
-                # don't read past bounds
-                bits = [ -1, -1 ]
-                if w < image.width:
-                    r, g, b = pixels[w, h]
-                    c = (r << 16) | (g << 8) | b
-                    if c == 0x000000: # black0
-                        highBit = 0
-                        bits = [0, 0]
-                    elif c == 0x75fb4c: # green
-                        highBit = 0
-                        bits = [0, 1]
-                    elif c == 0xea33f7: # purple
-                        highBit = 0
-                        bits = [1, 0]
-                    elif c == 0xd5d5d5: # white0
-                        highBit = 0
-                        bits = [1, 1]
-                    elif c == 0x646464: # black1
-                        highBit = 0x80
-                        bits = [0, 0]
-                    elif c == 0xec5e2a: # orange
-                        highBit = 0x80
-                        bits = [0, 1]
-                    elif c == 0x4eacf8: # blue
-                        highBit = 0x80
-                        bits = [1, 0]
-                    elif c == 0xffffff: # white1
-                        highBit = 0x80
-                        bits = [1, 1]
+                r, g, b = pixels[w, h]
+                c = (r << 16) | (g << 8) | b
+                if readingBit0:
+                    if c == 0x000000 or c == 0x75fb4c: # black0, green (first bit 0)
+                        outputBits.append(0)
+                        lastHighBit = 0
+                    elif c == 0xea33f7 or c == 0xd5d5d5: # purple, white0 (first bit 1)
+                        outputBits.append(outputMask)
+                        lastHighBit = 0
+                    elif c == 0x646464 or c == 0xec5e2a: # black1, orange (first bit 0)
+                        outputBits.append(0x80)
+                        lastHighBit = 0x80
+                    elif c == 0x4eacf8 or c == 0xffffff: # blue, white1 (first bit 1)
+                        outputBits.append(0x80 | outputMask)
+                        lastHighBit = 0x80
                     else:
-                        print(f"unrecognized pixel color {c:06x} at {w}, {h}")
+                        print(f"⚠️ unrecognized pixel color {c:06x} at {w}, {h}")
+                else:
+                    if c == 0x000000 or c == 0xea33f7: # black0, purple (second bit 0)
+                        outputBits.append(0)
+                        lastHighBit = 0
+                    elif c == 0x75fb4c or c == 0xd5d5d5: # green, white0 (second bit 1)
+                        outputBits.append(outputMask)
+                        lastHighBit = 0
+                    elif c == 0x646464 or c == 0x4eacf8: # black1, blue (second bit 0)
+                        outputBits.append(0x80)
+                        lastHighBit = 0x80
+                    elif c == 0xec5e2a or c == 0xffffff: # orange, white1 (second bit 1)
+                        outputBits.append(0x80 | outputMask)
+                        lastHighBit = 0x80
+                    else:
+                        print(f"⚠️ unrecognized pixel color {c:06x} at {w}, {h}")
+                readingBit0 = not readingBit0
+                outputMask <<= 1
                 
-                # emit the first bit, if any
-                if bits[0] >= 0:
-                    if bits[0] > 0:
-                        byte |= bit
-                    bit <<= 1
-                    if bit >= 0x80:
-                        if bitsEmitted < width:
-                            spriteFile.write(struct.pack("=B", highBit | (byte & 0x7F)))
-                            bitsEmitted += 7
-                        byte = 0
-                        bit = 1
-                
-                # emit the second bit, if any
-                if bits[1] >= 0:
-                    if bits[1] > 0:
-                        byte |= bit
-                    bit <<= 1
-                    if bit >= 0x80:
-                        if bitsEmitted < width:
-                            spriteFile.write(struct.pack("=B", highBit | (byte & 0x7F)))
-                            bitsEmitted += 7
-                        byte = 0
-                        bit = 1
-            # finishing up the row, emit any leftovers
-            if bit > 1 and bitsEmitted < width:
-                spriteFile.write(struct.pack("=B", highBit | (byte & 0x7F)))
-                bitsEmitted += 7
+                if outputMask >= 0x80:
+                    byte = 0
+                    for _ in range(0, 7):
+                        byte |= outputBits.popleft()
+                    spriteFile.write(struct.pack("=B", byte))
+                    bytesEmittedForRow += 1
+                    outputMask = 1
+            
+            # pad out the image with up to 7 more black bits
+            for _ in range(0, 7 - shift):
+                outputBits.append(lastHighBit)
+            # output everything
+            while len(outputBits) > 0:
+                byte = 0
+                for _ in range(0, 7):
+                    if len(outputBits) > 0:
+                        byte |= outputBits.popleft()
+                spriteFile.write(struct.pack("=B", byte))
+                bytesEmittedForRow += 1
+            # sanity check
+            if bytesEmittedForRow != expectedBytesPerRow:
+                print(f"⚠️ {bytesEmittedForRow} bytes emitted for shift {shift} row {h}, expected {expectedBytesPerRow}")
 
 # --- Main ---
+
+print(f"*** Automatically-generated by {os.path.basename(__file__)}, do not edit. ***\n")
 
 print(f".org ${address:04x}\n", file=spriteTable)
 
