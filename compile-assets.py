@@ -18,7 +18,7 @@ def buildTable(name, comments, assets):
         print(f"; {comment}", file=spriteTable)
     print(f"{name}:", file=spriteTable)
     for asset in assets:
-        r = re.search(r"\w+ ([^\.]*)(\.w(\d+))?", asset)
+        r = re.search(r"\w+ ([^\.]*)(\.pre)?", asset)
         print(f"\t.word\t${assetAddress:04x}\t\t; ${address:04x}: {r.group(1)}", file=spriteTable)
         
         filename = "Resources/" + asset + ".png"
@@ -30,7 +30,7 @@ def buildTable(name, comments, assets):
         # there are two kinds of image assets:
         # - normal sprite
         # - preshifted: 7 copies of the same thing, each shifted 1 bit to the right
-        if r.group(3) is None:
+        if r.group(2) is None:
             convertAsset(image)
         else:
             convertPreshiftedAsset(image)
@@ -336,17 +336,17 @@ buildTable("hostageLoadingSpriteTable",
 buildTable("mountainSpriteTable",
     [],
     [
-    "Mountain Mountain 1.w48",
-    "Mountain Mountain 2.w36",
-    "Mountain Mountain 3.w54",
-    "Mountain Mountain 4.w56",
+    "Mountain Mountain 1.pre",
+    "Mountain Mountain 2.pre",
+    "Mountain Mountain 3.pre",
+    "Mountain Mountain 4.pre",
     ])
 
 buildTable("hudBorderSprite", [], [ "HUD Right border (green) of HUD" ])
 
 buildTable("hudCornerSprite", [], [ "HUD Angled top corners of HUD" ])
 
-buildTable("baseBuildingSprite", [], [ "Base The orange main building of the base.w51" ])
+buildTable("baseBuildingSprite", [], [ "Base The orange main building of the base.pre" ])
 
 buildTable("baseGrassCornerSprite", [], [ "Base The little corners of grass at the base" ])
 
@@ -378,8 +378,8 @@ buildTable("houseSpriteTable",
     "All the sprites for the hostage houses"
     ],
     [
-    "House Normal house.w27",
-    "House House on fire.w27",
+    "House Normal house.pre",
+    "House House on fire.pre",
     ])
 
 buildTable("houseSillSprite", [], [ "House The white strip along the bottom of the house" ])
