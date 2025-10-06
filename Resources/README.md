@@ -24,9 +24,13 @@ Most of the sprites are straightforward, just 1 bpp monochrome. However, several
 
 The PNGs representing these pre-shifted images have one pixel *per bit*, even though each on-screen pixel requires two bits for the six Apple ][ HGR colors. This is because I’m encoding both the palette (high bit that selects green/purple or orange/blue) and the color in the image pixel.
 
-Thus, in general, the PNG will contain two horizontal pixels of the same color for a pixel on the Apple ][ screen. This is so that in the odd case of a two-bit pixel that straddles byte boundaries - and thus can have different palettes - the script can know which palette to set for each of the two bits.
+Thus, in general, the PNG will contain two horizontal pixels of the same color for a pixel on the Apple ][ screen. This is so that in the odd case of a two-bit pixel that straddles byte boundaries - and thus can have different palettes (high bits) - the script can know which palette to set for each of the two bits.
 
-In practice, this might happen if a black pixel straddles byte boundaries, where the prior byte is green/purple and the next byte is orange/blue.
+In practice, this might happen if a black pixel straddles byte boundaries, where the prior byte is green/purple and the next byte is orange/blue. This invisible quirk appears in `Mountain Mountain 4.pre.png`:
+
+<img width="242" height="86" alt="Screenshot 2025-10-06 at 2 59 02 PM" src="https://github.com/user-attachments/assets/c3c7e84b-c265-40be-a9c9-30fc7b470008" />
+
+where one bit of the fourth pixel-pair from the left in the top row has a different palette as its other bit.
 
 Finally, the script only understands the following colors in the input PNG:
 
@@ -41,9 +45,9 @@ Finally, the script only understands the following colors in the input PNG:
 | `#4eacf8` | blue                   |
 | `#ffffff` | white (high bit set)   |
 
-Using any other color in the PNG will generate a warning and mangle the output.
+Using any other color in the PNG will generate a warning and mangle the output. Note also the Apple ][ feature/quirk that two adjacent 1 bits will turn the pixel white, which the colors above will not account for at all.
 
-So, basically, you should not touch these unless you’re intimately familiar with how Apple ][ HGR colors work, so you can mentally map the color pixels you edit in the PNG to what might show up on screen.
+So, basically, I barely understand what I just wrote above and you should probably not touch these unless you’re intimately familiar with how Apple ][ HGR colors work. You need to mentally map the color pixels you edit in the PNG to what would show up on screen.
 
 ## Python
 
