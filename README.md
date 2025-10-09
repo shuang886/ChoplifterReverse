@@ -14,3 +14,6 @@ This reverse engineer was complete by me, Quinn Dunki, on May 12, 2024, but this
 
 Thanks Dan, for writing one of the best games on the platform, and I hope you don't mind that I did this to it.
 
+### Fork note:
+
+I branched off of Quinn's excellent work and extracted the image assets from the CHOPGFX binary blob into individual PNGs, and wrote a Python script to compile the extracted PNGs back into a blob. This means you can modify the extracted assets and build the game with those changes. More information in the README inside the Resources directory. - Steven
